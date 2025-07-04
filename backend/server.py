@@ -375,14 +375,19 @@ async def get_tool_details(tool_id: str):
     
     # Generate AI summary if not already available
     if not tool.get("ai_summary"):
-        ai_summary = await generate_tool_summary(tool)
-        tool["ai_summary"] = ai_summary
-        
-        # Update tool in database with AI summary
-        await db.tools.update_one(
-            {"id": tool_id},
-            {"$set": {"ai_summary": ai_summary}}
-        )
+        try:
+            ai_summary = await generate_tool_summary(tool)
+            tool["ai_summary"] = ai_summary
+            
+            # Update tool in database with AI summary
+            await db.tools.update_one(
+                {"id": tool_id},
+                {"$set": {"ai_summary": ai_summary}}
+            )
+        except Exception as e:
+            print(f"Error generating summary: {e}")
+            # Fallback summary
+            tool["ai_summary"] = f"Professional {tool['category'].lower()} solution designed for {', '.join(tool['target_audience'])}. Known for {', '.join(tool['features'][:3])}."
     
     return {"tool": tool}
 
