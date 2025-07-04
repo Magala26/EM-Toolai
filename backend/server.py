@@ -339,6 +339,10 @@ async def get_tool_details(tool_id: str):
     if not tool:
         raise HTTPException(status_code=404, detail="Tool not found")
     
+    # Convert MongoDB ObjectId to string for JSON serialization
+    if '_id' in tool:
+        tool['_id'] = str(tool['_id'])
+    
     # Generate AI summary if not already available
     if not tool.get("ai_summary"):
         ai_summary = await generate_tool_summary(tool)
