@@ -137,15 +137,18 @@ backend:
 
   - task: "Tools database and API"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Implemented tools database with curated financial tools (Tableau, Power BI, Python, etc.) and GET /api/tools endpoint"
+        - working: true
+        - agent: "testing"
+        - comment: "Successfully tested the tools database and API. The GET /api/tools endpoint correctly returns all curated financial tools. Fixed an issue with MongoDB ObjectId serialization."
 
   - task: "Tool details with AI summaries"
     implemented: true
