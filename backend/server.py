@@ -407,11 +407,21 @@ async def get_saved_tools(user_id: str):
     saved_tools_cursor = db.saved_tools.find({"user_id": user_id})
     saved_tools = await saved_tools_cursor.to_list(length=100)
     
+    # Convert MongoDB ObjectId to string for JSON serialization
+    for saved in saved_tools:
+        if '_id' in saved:
+            saved['_id'] = str(saved['_id'])
+    
     tool_ids = [saved["tool_id"] for saved in saved_tools]
     
     # Get tool details
     tools_cursor = db.tools.find({"id": {"$in": tool_ids}})
     tools = await tools_cursor.to_list(length=100)
+    
+    # Convert MongoDB ObjectId to string for JSON serialization
+    for tool in tools:
+        if '_id' in tool:
+            tool['_id'] = str(tool['_id'])
     
     return {"saved_tools": tools}
 
