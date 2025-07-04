@@ -282,6 +282,10 @@ async def generate_tool_summary(tool: Dict) -> str:
         return f"Professional {tool['category'].lower()} solution designed for {', '.join(tool['target_audience'])}. Known for {', '.join(tool['features'][:3])}."
 
 # API Routes
+@app.get("/api")
+async def api_root():
+    return {"message": "Financial AI Tools Directory API"}
+
 @app.get("/")
 async def root():
     return {"message": "Financial AI Tools Directory API"}
