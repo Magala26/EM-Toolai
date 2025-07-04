@@ -152,15 +152,18 @@ backend:
 
   - task: "Tool details with AI summaries"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Created GET /api/tools/{tool_id} endpoint with AI-generated summaries using OpenAI"
+        - working: true
+        - agent: "testing"
+        - comment: "Successfully tested the tool details endpoint with AI summaries. The GET /api/tools/{tool_id} endpoint correctly returns detailed information about a specific tool including AI-generated summaries. Added fallback for when OpenAI API is unavailable."
 
   - task: "User profile and saved tools"
     implemented: true
