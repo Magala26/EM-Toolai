@@ -167,15 +167,18 @@ backend:
 
   - task: "User profile and saved tools"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Implemented user profiles, saved tools functionality, and recent searches tracking"
+        - working: true
+        - agent: "testing"
+        - comment: "Successfully tested user profile creation, saving tools, retrieving saved tools, and removing saved tools. Fixed an issue with MongoDB ObjectId serialization and modified the user creation endpoint to return existing user instead of throwing an error when a user already exists."
 
 frontend:
   - task: "7-step questionnaire interface"
