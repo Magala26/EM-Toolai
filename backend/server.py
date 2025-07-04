@@ -398,7 +398,10 @@ async def create_user(user: UserProfile):
     # Check if user already exists
     existing_user = await db.users.find_one({"email": user.email})
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
+        # Convert MongoDB ObjectId to string for JSON serialization
+        if '_id' in existing_user:
+            existing_user['_id'] = str(existing_user['_id'])
+        return {"user": existing_user}
     
     user_data = {
         "id": str(uuid.uuid4()),
@@ -409,6 +412,11 @@ async def create_user(user: UserProfile):
     }
     
     await db.users.insert_one(user_data)
+    
+    # Convert MongoDB ObjectId to string for JSON serialization
+    if '_id' in user_data:
+        user_data['_id'] = str(user_data['_id'])
+    
     return {"user": user_data}
 
 @app.post("/api/saved-tools")
