@@ -212,7 +212,7 @@ async def generate_tool_recommendations(questionnaire: QuestionnaireResponse, to
     - Team Size: {questionnaire.team_size}
     
     Available Tools:
-    {[{{'name': tool['name'], 'category': tool['category'], 'pricing': tool['pricing'], 'description': tool['description']}} for tool in tools]}
+    {str([{'name': tool['name'], 'category': tool['category'], 'pricing': tool['pricing'], 'description': tool['description']} for tool in tools])}
     
     Please recommend the top 5 most suitable tools and provide a brief explanation for each recommendation.
     Return only the tool names and reasoning in a clear format.
