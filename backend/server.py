@@ -432,6 +432,11 @@ async def get_recent_searches(user_id: str):
     recent_searches_cursor = db.questionnaires.find({"user_id": user_id}).sort("created_at", -1).limit(10)
     recent_searches = await recent_searches_cursor.to_list(length=10)
     
+    # Convert MongoDB ObjectId to string for JSON serialization
+    for search in recent_searches:
+        if '_id' in search:
+            search['_id'] = str(search['_id'])
+    
     return {"recent_searches": recent_searches}
 
 @app.delete("/api/saved-tools/{user_id}/{tool_id}")
