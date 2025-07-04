@@ -49,7 +49,7 @@ def create_test_user() -> Dict[str, Any]:
 def test_root_endpoint():
     """Test the root endpoint"""
     print("\n🧪 Testing root endpoint...")
-    response = requests.get(BACKEND_URL)
+    response = requests.get(f"{API_URL}")
     assert response.status_code == 200, f"Root endpoint failed: {response.text}"
     assert "message" in response.json(), "Root endpoint response missing 'message' field"
     print("✅ Root endpoint test passed")
