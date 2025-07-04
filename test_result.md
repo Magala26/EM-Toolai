@@ -122,15 +122,18 @@ backend:
 
   - task: "Questionnaire API endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Created POST /api/questionnaire endpoint that processes 7-step questionnaire and returns AI recommendations"
+        - working: true
+        - agent: "testing"
+        - comment: "Successfully tested the questionnaire API endpoint. The endpoint correctly processes the 7-step questionnaire data and returns appropriate tool recommendations. Fixed an issue with MongoDB ObjectId serialization and added fallback for OpenAI API failures."
 
   - task: "Tools database and API"
     implemented: true
