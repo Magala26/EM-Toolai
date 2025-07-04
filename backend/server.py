@@ -299,8 +299,38 @@ async def submit_questionnaire(questionnaire: QuestionnaireResponse):
     tools_cursor = tools_collection.find({})
     tools = await tools_cursor.to_list(length=100)
     
-    # Generate AI recommendations
-    recommended_tools = await generate_tool_recommendations(questionnaire, tools)
+    # Convert MongoDB ObjectId to string for JSON serialization
+    for tool in tools:
+        if '_id' in tool:
+            tool['_id'] = str(tool['_id'])
+    
+    try:
+        # Generate AI recommendations
+        recommended_tools = await generate_tool_recommendations(questionnaire, tools)
+    except Exception as e:
+        print(f"Error generating recommendations: {e}")
+        # Fallback to simple matching based on use case and data types
+        recommended_tools = []
+        use_case_lower = questionnaire.use_case.lower()
+        data_types_lower = [dt.lower() for dt in questionnaire.data_types]
+        
+        for tool in tools:
+            # Simple matching based on description and features
+            description_lower = tool['description'].lower()
+            features_lower = [f.lower() for f in tool['features']]
+            
+            # Check if any keywords match
+            if any(keyword in description_lower for keyword in data_types_lower) or \
+               any(keyword in ' '.join(features_lower) for keyword in data_types_lower) or \
+               any(keyword in description_lower for keyword in use_case_lower.split()) or \
+               any(keyword in ' '.join(features_lower) for keyword in use_case_lower.split()):
+                recommended_tools.append(tool)
+        
+        # If still no matches, return top 5 tools
+        if not recommended_tools:
+            recommended_tools = tools[:5]
+        else:
+            recommended_tools = recommended_tools[:5]
     
     # Store questionnaire and search history
     questionnaire_data = {
