@@ -10,12 +10,12 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [questionnaire, setQuestionnaire] = useState({
     position: '',
-    use_case: '',
-    budget: '',
+    use_case: [],
+    budget: 0,
     company_size: '',
     data_types: [],
     integration_needs: '',
-    team_size: ''
+    perfect_solution: ''
   });
   const [currentStep, setCurrentStep] = useState(1);
   const [recommendations, setRecommendations] = useState([]);
@@ -67,12 +67,20 @@ function App() {
     setLoading(true);
     
     try {
+      // Convert questionnaire format for backend
+      const submissionData = {
+        ...questionnaire,
+        use_case: questionnaire.use_case.join(', '),
+        budget: `$${questionnaire.budget}/month`,
+        team_size: questionnaire.perfect_solution // Using perfect_solution as team_size for backend compatibility
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/questionnaire`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(questionnaire),
+        body: JSON.stringify(submissionData),
       });
       
       const data = await response.json();
@@ -118,6 +126,40 @@ function App() {
     } catch (error) {
       console.error('Error saving tool:', error);
       alert('Error saving tool');
+    }
+  };
+
+  const handleUseCaseChange = (useCase, checked) => {
+    if (checked) {
+      if (questionnaire.use_case.length < 3) {
+        setQuestionnaire({
+          ...questionnaire,
+          use_case: [...questionnaire.use_case, useCase]
+        });
+      }
+    } else {
+      setQuestionnaire({
+        ...questionnaire,
+        use_case: questionnaire.use_case.filter(item => item !== useCase)
+      });
+    }
+  };
+
+  const handleCompanySizeSelect = (size) => {
+    setQuestionnaire({...questionnaire, company_size: size});
+  };
+
+  const handleDataTypeChange = (dataType, checked) => {
+    if (checked) {
+      setQuestionnaire({
+        ...questionnaire,
+        data_types: [...questionnaire.data_types, dataType]
+      });
+    } else {
+      setQuestionnaire({
+        ...questionnaire,
+        data_types: questionnaire.data_types.filter(item => item !== dataType)
+      });
     }
   };
 
@@ -318,6 +360,20 @@ function App() {
     </div>
   );
 
+  const isStepValid = (step) => {
+    switch (step) {
+      case 1: return questionnaire.position !== '';
+      case 2: return questionnaire.use_case.length >= 1;
+      case 3: return questionnaire.budget > 0;
+      case 4: return questionnaire.company_size !== '';
+      case 5: return questionnaire.data_types.length > 0;
+      case 6: return questionnaire.integration_needs !== '';
+      case 7: return questionnaire.perfect_solution.trim() !== '';
+      case 8: return true; // Summary step is always valid
+      default: return false;
+    }
+  };
+
   return (
     <div className="app">
       {loading && <LoadingSpinner />}
@@ -327,7 +383,22 @@ function App() {
         <div className={`left-panel ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="panel-header">
             <div className="app-logo">
-              <span className="logo-text">FinAI</span>
+              {sidebarCollapsed ? (
+                <img 
+                  src="https://images.unsplash.com/photo-1639327380081-bf86fc57a7a5" 
+                  alt="FinAI" 
+                  className="logo-image-collapsed"
+                />
+              ) : (
+                <div className="logo-expanded">
+                  <img 
+                    src="https://images.unsplash.com/photo-1639327380081-bf86fc57a7a5" 
+                    alt="FinAI" 
+                    className="logo-image"
+                  />
+                  <span className="logo-text">FinAI</span>
+                </div>
+              )}
             </div>
             <button 
               className="sidebar-toggle"
@@ -460,13 +531,14 @@ function App() {
                   <div className="progress-bar">
                     <div 
                       className="progress-fill" 
-                      style={{ width: `${(currentStep / 7) * 100}%` }}
+                      style={{ width: `${(currentStep / 8) * 100}%` }}
                     ></div>
                   </div>
-                  <p className="step-indicator">Step {currentStep} of 7</p>
+                  <p className="step-indicator">Step {currentStep} of 8</p>
                 </div>
 
                 <div className="questionnaire-content">
+                  {/* Step 1: Position (Dropdown) */}
                   <QuestionnaireStep step={1}>
                     <h2>What is your professional position?</h2>
                     <div className="input-group">
@@ -487,83 +559,93 @@ function App() {
                     </div>
                   </QuestionnaireStep>
 
+                  {/* Step 2: Use Case (Checkbox with 3 max, 1 min) */}
                   <QuestionnaireStep step={2}>
                     <h2>What is your primary use case?</h2>
-                    <div className="input-group">
-                      <select 
-                        value={questionnaire.use_case}
-                        onChange={(e) => setQuestionnaire({...questionnaire, use_case: e.target.value})}
-                      >
-                        <option value="">Select your use case</option>
-                        <option value="Financial Reporting">Financial Reporting</option>
-                        <option value="Data Visualization">Data Visualization</option>
-                        <option value="Predictive Analytics">Predictive Analytics</option>
-                        <option value="Risk Analysis">Risk Analysis</option>
-                        <option value="Budget Planning">Budget Planning</option>
-                        <option value="Investment Analysis">Investment Analysis</option>
-                        <option value="Compliance Reporting">Compliance Reporting</option>
-                        <option value="Performance Tracking">Performance Tracking</option>
-                      </select>
+                    <p className="instruction-text">Select 1-3 options that best describe your needs</p>
+                    <div className="input-group checkbox-group">
+                      {[
+                        'Financial Reporting',
+                        'Data Visualization', 
+                        'Predictive Analytics',
+                        'Risk Analysis',
+                        'Budget Planning',
+                        'Investment Analysis',
+                        'Compliance Reporting',
+                        'Performance Tracking'
+                      ].map((useCase) => (
+                        <label key={useCase} className={`checkbox-label ${questionnaire.use_case.includes(useCase) ? 'selected' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={questionnaire.use_case.includes(useCase)}
+                            onChange={(e) => handleUseCaseChange(useCase, e.target.checked)}
+                            disabled={!questionnaire.use_case.includes(useCase) && questionnaire.use_case.length >= 3}
+                          />
+                          {useCase}
+                        </label>
+                      ))}
                     </div>
+                    <p className="selection-count">Selected: {questionnaire.use_case.length}/3</p>
                   </QuestionnaireStep>
 
+                  {/* Step 3: Budget (Slider 0-1000 in $50 jumps) */}
                   <QuestionnaireStep step={3}>
                     <h2>What is your budget range?</h2>
-                    <div className="input-group">
-                      <select 
-                        value={questionnaire.budget}
-                        onChange={(e) => setQuestionnaire({...questionnaire, budget: e.target.value})}
-                      >
-                        <option value="">Select your budget</option>
-                        <option value="Free">Free</option>
-                        <option value="Under $50/month">Under $50/month</option>
-                        <option value="$50-$200/month">$50-$200/month</option>
-                        <option value="$200-$500/month">$200-$500/month</option>
-                        <option value="$500-$1000/month">$500-$1000/month</option>
-                        <option value="Above $1000/month">Above $1000/month</option>
-                        <option value="Enterprise pricing">Enterprise pricing</option>
-                      </select>
+                    <div className="input-group slider-group">
+                      <div className="budget-display">
+                        <span className="budget-value">${questionnaire.budget}/month</span>
+                      </div>
+                      <div className="slider-container">
+                        <input
+                          type="range"
+                          min="0"
+                          max="1000"
+                          step="50"
+                          value={questionnaire.budget}
+                          onChange={(e) => setQuestionnaire({...questionnaire, budget: parseInt(e.target.value)})}
+                          className="budget-slider"
+                        />
+                        <div className="slider-labels">
+                          <span>$0</span>
+                          <span>$500</span>
+                          <span>$1000+</span>
+                        </div>
+                      </div>
                     </div>
                   </QuestionnaireStep>
 
+                  {/* Step 4: Company Size (Button choices) */}
                   <QuestionnaireStep step={4}>
                     <h2>What is your company size?</h2>
-                    <div className="input-group">
-                      <select 
-                        value={questionnaire.company_size}
-                        onChange={(e) => setQuestionnaire({...questionnaire, company_size: e.target.value})}
-                      >
-                        <option value="">Select company size</option>
-                        <option value="Solo/Freelancer">Solo/Freelancer</option>
-                        <option value="Small (2-10 employees)">Small (2-10 employees)</option>
-                        <option value="Medium (11-50 employees)">Medium (11-50 employees)</option>
-                        <option value="Large (51-200 employees)">Large (51-200 employees)</option>
-                        <option value="Enterprise (200+ employees)">Enterprise (200+ employees)</option>
-                      </select>
+                    <div className="input-group button-group">
+                      {[
+                        'Solo/Freelancer',
+                        'Small (2-10 employees)',
+                        'Medium (11-50 employees)', 
+                        'Large (51-200 employees)',
+                        'Enterprise (200+ employees)'
+                      ].map((size) => (
+                        <button
+                          key={size}
+                          className={`choice-button ${questionnaire.company_size === size ? 'selected' : ''}`}
+                          onClick={() => handleCompanySizeSelect(size)}
+                        >
+                          {size}
+                        </button>
+                      ))}
                     </div>
                   </QuestionnaireStep>
 
+                  {/* Step 5: Data Types (Keep existing) */}
                   <QuestionnaireStep step={5}>
                     <h2>What types of data do you work with?</h2>
                     <div className="input-group checkbox-group">
                       {['Financial statements', 'Market data', 'Customer data', 'Sales data', 'Operational data', 'External APIs', 'Spreadsheets', 'Databases'].map((type) => (
-                        <label key={type} className="checkbox-label">
+                        <label key={type} className={`checkbox-label ${questionnaire.data_types.includes(type) ? 'selected' : ''}`}>
                           <input
                             type="checkbox"
                             checked={questionnaire.data_types.includes(type)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setQuestionnaire({
-                                  ...questionnaire,
-                                  data_types: [...questionnaire.data_types, type]
-                                });
-                              } else {
-                                setQuestionnaire({
-                                  ...questionnaire,
-                                  data_types: questionnaire.data_types.filter(t => t !== type)
-                                });
-                              }
-                            }}
+                            onChange={(e) => handleDataTypeChange(type, e.target.checked)}
                           />
                           {type}
                         </label>
@@ -571,6 +653,7 @@ function App() {
                     </div>
                   </QuestionnaireStep>
 
+                  {/* Step 6: Integration (Keep as is) */}
                   <QuestionnaireStep step={6}>
                     <h2>What are your integration requirements?</h2>
                     <div className="input-group">
@@ -590,20 +673,47 @@ function App() {
                     </div>
                   </QuestionnaireStep>
 
+                  {/* Step 7: Perfect Solution (Long text box) */}
                   <QuestionnaireStep step={7}>
-                    <h2>What is your team size?</h2>
+                    <h2>If it was perfect, what would it do?</h2>
+                    <p className="instruction-text">Describe your ideal solution in detail</p>
                     <div className="input-group">
-                      <select 
-                        value={questionnaire.team_size}
-                        onChange={(e) => setQuestionnaire({...questionnaire, team_size: e.target.value})}
-                      >
-                        <option value="">Select team size</option>
-                        <option value="Just me">Just me</option>
-                        <option value="2-5 people">2-5 people</option>
-                        <option value="6-10 people">6-10 people</option>
-                        <option value="11-25 people">11-25 people</option>
-                        <option value="25+ people">25+ people</option>
-                      </select>
+                      <textarea
+                        value={questionnaire.perfect_solution}
+                        onChange={(e) => setQuestionnaire({...questionnaire, perfect_solution: e.target.value})}
+                        placeholder="Describe what your perfect financial AI tool would do for your business..."
+                        rows="6"
+                        className="perfect-solution-textarea"
+                      />
+                    </div>
+                  </QuestionnaireStep>
+
+                  {/* Step 8: Summary */}
+                  <QuestionnaireStep step={8}>
+                    <h2>Summary of Your Requirements</h2>
+                    <div className="summary-container">
+                      <div className="summary-item">
+                        <strong>Position:</strong> {questionnaire.position}
+                      </div>
+                      <div className="summary-item">
+                        <strong>Use Cases:</strong> {questionnaire.use_case.join(', ')}
+                      </div>
+                      <div className="summary-item">
+                        <strong>Budget:</strong> ${questionnaire.budget}/month
+                      </div>
+                      <div className="summary-item">
+                        <strong>Company Size:</strong> {questionnaire.company_size}
+                      </div>
+                      <div className="summary-item">
+                        <strong>Data Types:</strong> {questionnaire.data_types.join(', ')}
+                      </div>
+                      <div className="summary-item">
+                        <strong>Integration Needs:</strong> {questionnaire.integration_needs}
+                      </div>
+                      <div className="summary-item">
+                        <strong>Perfect Solution:</strong>
+                        <p className="summary-description">{questionnaire.perfect_solution}</p>
+                      </div>
                     </div>
                   </QuestionnaireStep>
 
@@ -617,21 +727,20 @@ function App() {
                       </button>
                     )}
                     
-                    {currentStep < 7 ? (
+                    {currentStep < 8 ? (
                       <button 
                         className="btn-primary"
                         onClick={() => setCurrentStep(currentStep + 1)}
-                        disabled={!Object.values(questionnaire)[currentStep - 1]}
+                        disabled={!isStepValid(currentStep)}
                       >
                         Next
                       </button>
                     ) : (
                       <button 
-                        className="btn-primary"
+                        className="btn-primary btn-get-recommendations"
                         onClick={handleQuestionnaireSubmit}
-                        disabled={!questionnaire.team_size}
                       >
-                        Get Recommendations
+                        🚀 Get AI Recommendations
                       </button>
                     )}
                   </div>
